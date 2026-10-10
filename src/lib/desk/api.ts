@@ -15,6 +15,11 @@ export const refreshResearch = createServerFn({ method: "POST" }).handler(async 
   return loadDesk("research");
 });
 
+export const refreshEtfCatalog = createServerFn({ method: "POST" }).handler(async () => {
+  const { loadEtfCatalog } = await import("./load.server");
+  return loadEtfCatalog();
+});
+
 export const refreshSocial = createServerFn({ method: "POST" }).handler(async () => {
   const { loadSocial } = await import("./load.server");
   return loadSocial();

@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useState } from "react";
 import { FlowChart, PriceChart, StepChart } from "@/components/charts";
 import { Ext, Money, Panel, Pct, Px, Qty, SaveButton, useDesk, When } from "@/components/desk-ui";
+import { EtfCatalogGroups } from "@/components/etf-catalog";
+import { assetEtfRecords } from "@/lib/desk/etf";
 import { etfStrength, priceReaction, sessionWindow } from "@/lib/desk/rules";
 import { useWatch } from "@/lib/desk/watch-store";
 import { fmtPct, seoulDate } from "@/lib/desk/format";
@@ -22,6 +24,7 @@ function CoinPage() {
   const tab = TABS.includes(search.tab as (typeof TABS)[number]) ? (search.tab as (typeof TABS)[number]) : "etf";
   const sessions = desk.etf.sessions.filter((s) => s.assetId === assetId);
   const products = desk.etf.products.filter((p) => p.assetId === assetId);
+  const etfRecords = assetEtfRecords(desk.etf.catalog?.records ?? [], assetId);
   const holdings = desk.dat.holdings.filter((h) => h.assetId === assetId);
   const discs = desk.dat.disclosures.filter((d) => d.assetId === assetId);
   const news = desk.news.filter((n) => n.assetIds.includes(assetId) || n.title.toUpperCase().includes(asset?.symbol ?? "___"));
@@ -100,8 +103,15 @@ function CoinPage() {
         ))}
       </div>
       {tab === "etf" ? (
-        <Panel title="ETF" aside={products.length ? "해당 있음" : "N/A"}>
-          {!products.length ? <p className="text-sm text-muted">이 자산의 미국 현물 ETF 행이 출처 페이지에 없습니다. 0 유입으로 두지 않습니다.</p> : null}
+        <div className="space-y-3">
+          <Panel title="ETF 상품·신청" aside="단일 자산 기록 · 바스켓 제외">
+            <p className="text-sm leading-6 text-muted">{desk.etf.catalog?.coverageNote ?? "검증된 ETF 카탈로그가 아직 없습니다. 전체 시장의 상품·신청 수는 미확인입니다."}</p>
+            <p className="mt-2 text-xs text-muted">자료 갱신 {desk.etf.catalog?.updatedAt ? <When iso={desk.etf.catalog.updatedAt} /> : "미확인"}. 승인·신청 상태와 자금 수치는 별도로 확인합니다.</p>
+            <Link to="/etf" search={{ ...search, tab: "overview", q: asset.symbol }} className="mt-2 inline-flex min-h-11 items-center text-sm text-accent">ETF 카탈로그에서 보기</Link>
+          </Panel>
+          <EtfCatalogGroups records={etfRecords} emptyMessage="이 자산의 상품·신청 기록을 아직 확보하지 못했습니다. 전체 시장에 ETF가 없다는 뜻이 아닙니다." />
+        <Panel title="ETF 자금 데이터" aside={products.length ? "출처에 자금 행 있음" : "N/A"}>
+          {!products.length ? <p className="text-sm text-muted">수집한 자금 출처에 이 자산의 행이 없습니다. 승인·신청 기록의 유무와 별개이며 0 유입으로 두지 않습니다.</p> : null}
           {products.length ? <p className="mb-2 text-xs text-muted">5세션 {five.sum == null ? "결측으로 합산 안 함" : fmtUsdSafe(five.sum)}</p> : null}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
@@ -122,6 +132,7 @@ function CoinPage() {
             </table>
           </div>
         </Panel>
+        </div>
       ) : null}
       {tab === "dat" ? (
         <Panel title="기업 보유" aside="디렉터리와 SEC를 합치지 않음">

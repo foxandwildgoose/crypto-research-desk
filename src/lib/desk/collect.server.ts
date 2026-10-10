@@ -259,25 +259,11 @@ export async function fetchCandles(assets: Asset[]): Promise<Record<string, Cand
   return candles;
 }
 
-const ETF_ASSET: Record<string, string> = {
-  btc: "btc",
-  eth: "eth",
-  sol: "sol",
-  xrp: "xrp",
-  doge: "doge",
-  link: "link",
-  hbar: "hbar",
-  ltc: "ltc",
-  avax: "avax",
-  sui: "sui",
-  dot: "dot",
-};
-
-export async function fetchEtf(now: string) {
+export async function fetchEtf(now: string, previous?: DeskSnapshot["etf"]) {
   const index = await allowedGet("https://bykaranteli.com/etf", 15000);
   const slugs = index.ok
-    ? [...new Set([...index.text.matchAll(/href="\/etf\/([a-z0-9]+)"/g)].map((m) => m[1]))]
-    : ["btc", "eth", "sol", "xrp"];
+    ? [...new Set([...index.text.matchAll(/href=["']\/etf\/([a-z0-9-]+)["']/g)].map((m) => m[1]))]
+    : [...new Set(previous?.products.map(p => p.assetId) ?? [])];
   const pages = await pool(slugs, 3, async (slug) => {
     const url = `https://bykaranteli.com/etf/${slug}`;
     const res = await allowedGet(url, 15000);
@@ -289,7 +275,7 @@ export async function fetchEtf(now: string) {
   const extraAssets: Asset[] = [];
   for (const page of pages) {
     if (!page.res.ok || !page.res.text.includes("<table")) continue;
-    const assetId = ETF_ASSET[page.slug] ?? page.slug;
+    const assetId = page.slug;
     if (!SEED_ASSETS.some((a) => a.id === assetId)) {
       extraAssets.push({
         id: assetId,
@@ -297,8 +283,8 @@ export async function fetchEtf(now: string) {
         name: page.slug.toUpperCase(),
         nameKo: page.slug.toUpperCase(),
         themes: ["ETF"],
-        okxSpot: `${page.slug.toUpperCase()}-USDT`,
-        okxSwap: `${page.slug.toUpperCase()}-USDT-SWAP`,
+        okxSpot: null,
+        okxSwap: null,
         contract: null,
         identity: "unresolved",
       });
@@ -314,6 +300,10 @@ export async function fetchEtf(now: string) {
     { "user-agent": UA, accept: "text/html" },
   );
   const secDate = sec.ok ? (monthDateToIso(/([A-Z][a-z]+ \d{1,2}, 2025)/.exec(sec.text)?.[1] ?? "") ?? null) : null;
+  // Partial retrieval is not proof that an existing product or session disappeared.
+  const allProducts = [...new Map([...(previous?.products ?? []), ...products].map(p => [`${p.assetId}:${p.ticker}`, p])).values()];
+  const allSessions = [...new Map([...(previous?.sessions ?? []), ...sessions].map(s => [`${s.assetId}:${s.date}`, s])).values()].sort((a, b) => b.date.localeCompare(a.date));
+  const allHeat = [...new Map([...(previous?.heat ?? []), ...heat].map(h => [`${h.assetId}:${h.ticker}:${h.date}`, h])).values()];
   return {
     ok: products.length > 0,
     extraAssets,
@@ -326,13 +316,13 @@ export async function fetchEtf(now: string) {
         source: "ByKaranteli public ETF pages",
         url: "https://bykaranteli.com/etf",
         retrievedAt: now,
-        asOf: sessions[0]?.date ?? null,
-        kind: "live" as const,
+        asOf: allSessions[0]?.date ?? null,
+        kind: products.length ? "mixed" as const : "snapshot" as const,
         note: "순유입은 페이지의 daily net flow. 거래대금·AUM은 별도 열. SoSoValue 키 없음.",
       },
-      products,
-      sessions,
-      heat,
+      products: allProducts,
+      sessions: allSessions,
+      heat: allHeat,
       milestones: [
         {
           id: "sec-generic-2025-121",
@@ -348,14 +338,14 @@ export async function fetchEtf(now: string) {
           id: `listed-${p.assetId}-${p.ticker}`,
           assetId: p.assetId,
           ticker: p.ticker,
-          title: `${p.ticker} ${p.issuer} 행이 미국 현물 자금 표에 있음`,
+          title: `${p.ticker} ${p.issuer} 행이 미국 자금 표에 있음`,
           date: p.sessionDate,
           uncertainty: "상장 효력일이 아니라 출처 페이지가 보여주는 최근 세션.",
           url: p.sourceUrl,
           summary: p.tradingState === "reported" ? "최근 세션 숫자가 있음." : "행은 있으나 최근 일일 흐름이 결측.",
         })),
       ],
-      coverageNote: `발견 슬러그 ${slugs.join(", ") || "없음"}. 홍콩·레버리지·선물 ETF는 이 표에 없으면 포함하지 않음.`,
+      coverageNote: `자금 출처의 발견 슬러그 ${slugs.join(", ") || "없음"}. 승인·신청 전수 범위가 아닌 자금 표이며 실패 시 기존 행 유지.`,
     },
   };
 }
@@ -703,6 +693,7 @@ export async function acquireDesk(
   xPostsPath?: string,
   previousHoldings: CompanyHolding[] = [],
   existingSocial?: DeskSnapshot["social"],
+  previousEtf?: DeskSnapshot["etf"],
 ): Promise<DeskSnapshot> {
   const now = new Date().toISOString();
   const warnings: DeskSnapshot["warnings"] = [
@@ -713,8 +704,8 @@ export async function acquireDesk(
     },
   ];
   const modules: ModuleStatus[] = [];
-  let assets = SEED_ASSETS.map((a) => ({ ...a }));
-  const etfResult = await fetchEtf(now);
+  const assets = SEED_ASSETS.map((a) => ({ ...a }));
+  const etfResult = await fetchEtf(now, previousEtf);
   for (const extra of etfResult.extraAssets) {
     if (!assets.some((a) => a.id === extra.id)) assets.push(extra);
   }

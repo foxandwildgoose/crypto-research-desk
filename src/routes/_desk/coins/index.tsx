@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useState } from "react";
 import { AssetLink, Money, Panel, Pct, SaveButton, useDesk, quoteOf } from "@/components/desk-ui";
 import { sessionWindow } from "@/lib/desk/rules";
+import { assetEtfRecords, etfSection } from "@/lib/desk/etf";
 import { useWatch } from "@/lib/desk/watch-store";
 import type { DeskSnapshot } from "@/lib/desk/types";
 import type { DeskSearch } from "@/lib/desk/search";
@@ -19,7 +20,7 @@ function passes(desk: DeskSnapshot, search: DeskSearch, id: string, saved: boole
   }
   if (search.theme && !asset.themes.includes(search.theme)) return false;
   if (search.watch === "1" && !saved) return false;
-  const etf = desk.etf.products.some((p) => p.assetId === id);
+  const etf = desk.etf.products.some((p) => p.assetId === id) || assetEtfRecords(desk.etf.catalog?.records ?? [], id).length > 0;
   if (search.etf === "yes" && !etf) return false;
   if (search.etf === "no" && etf) return false;
   const dat = desk.dat.holdings.some((h) => h.assetId === id && h.kind === "treasury");
@@ -44,9 +45,17 @@ function Coins() {
       const quote = quoteOf(desk, id);
       const sessions = desk.etf.sessions.filter((s) => s.assetId === id);
       const flow = sessionWindow(sessions, 0, 5);
-      const hasEtf = desk.etf.products.some((p) => p.assetId === id);
+      const hasFlows = desk.etf.products.some((p) => p.assetId === id);
+      const etfRecords = assetEtfRecords(desk.etf.catalog?.records ?? [], id);
+      const approved = etfRecords.filter((record) => etfSection(record) === "approved").length;
+      const applications = etfRecords.filter((record) => etfSection(record) === "applications").length;
+      const unverified = etfRecords.some((record) => etfSection(record) === "unverified");
       const dat = desk.dat.holdings.filter((h) => h.assetId === id && h.kind === "treasury");
-      return { id, quote, flow: hasEtf ? flow.sum : null, etfApplicable: hasEtf, datApplicable: dat.length > 0, datQty: dat.reduce((a, h) => a + h.holdings, 0) };
+      return {
+        id, quote, flow: hasFlows ? flow.sum : null, etfApplicable: hasFlows,
+        etfLabel: approved || applications ? `승인 ${approved} · 신청 ${applications}` : unverified ? "미검증 기록" : etfRecords.length ? "과거 기록" : hasFlows ? "자금 행만 있음" : "수집 기록 없음",
+        datApplicable: dat.length > 0, datQty: dat.reduce((a, h) => a + h.holdings, 0),
+      };
     })
     .sort((a, b) => {
       if (sort === "d1") return (b.quote?.change24hPct ?? -999) - (a.quote?.change24hPct ?? -999);
@@ -71,8 +80,8 @@ function Coins() {
         </select>
         <select className="h-9 rounded-md border border-line bg-surface px-2" value={search.etf} onChange={(e) => void navigate({ to: ".", search: (p) => ({ ...p, etf: e.target.value === "yes" || e.target.value === "no" ? e.target.value : "all" }) })}>
           <option value="all">ETF 전체</option>
-          <option value="yes">ETF 있음</option>
-          <option value="no">ETF 없음</option>
+          <option value="yes">ETF 기록 있음</option>
+          <option value="no">ETF 기록 없음</option>
         </select>
         <select className="h-9 rounded-md border border-line bg-surface px-2" value={search.dat} onChange={(e) => void navigate({ to: ".", search: (p) => ({ ...p, dat: e.target.value === "yes" || e.target.value === "no" ? e.target.value : "all" }) })}>
           <option value="all">기업보유 전체</option>
@@ -103,6 +112,7 @@ function Coins() {
                 <th className="font-medium">가격</th>
                 <th className="font-medium">24h</th>
                 <th className="font-medium">7d</th>
+                <th className="font-medium">ETF 기록</th>
                 <th className="font-medium">ETF 5세션</th>
                 <th className="font-medium">트레저리 합성</th>
                 <th className="font-medium">장소</th>
@@ -123,6 +133,7 @@ function Coins() {
                     <td className="font-mono tabular-nums">{row.quote?.priceUsd == null ? "—" : row.quote.priceUsd.toLocaleString("en-US", { maximumFractionDigits: row.quote.priceUsd < 1 ? 8 : 2 })}</td>
                     <td><Pct n={row.quote?.change24hPct} /></td>
                     <td><Pct n={row.quote?.change7dPct} /></td>
+                    <td className="text-xs text-muted">{row.etfLabel}</td>
                     <td><Money n={row.flow} applicable={row.etfApplicable} /></td>
                     <td>{row.datApplicable ? <span className="font-mono text-sm tabular-nums">{row.datQty.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span> : <span className="text-muted">N/A</span>}</td>
                     <td className="text-xs text-muted">{row.quote?.venue ?? "—"}{row.quote?.upbitKrw ? " · KRW" : ""}</td>
@@ -133,7 +144,7 @@ function Coins() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-xs text-muted">트레저리 합은 회사별 최신 공개의 합성입니다. 같은 시각 잔고가 아닙니다. ETF 5세션은 결측이 있으면 — 입니다.</p>
+        <p className="mt-2 text-xs text-muted">트레저리 합은 회사별 최신 공개의 합성입니다. 같은 시각 잔고가 아닙니다. ETF 기록은 단일 자산 상품·신청만 반영하며, 미검증 기록을 승인으로 세지 않습니다. ETF 기록의 유무는 자금 수치의 제공 여부와 별개입니다. ETF 5세션은 결측이 있으면 — 입니다.</p>
       </Panel>
       {cmp.length > 1 ? (
         <Panel title="비교" aside="같은 단위, 최대 4개">

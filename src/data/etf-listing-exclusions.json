@@ -1,0 +1,107 @@
+[
+  {
+    "ticker": "FDIG",
+    "name": "Fidelity Crypto Industry and Digital Payments ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "WGMI",
+    "name": "CoinShares Bitcoin Mining and Digital Power ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "BCOR",
+    "name": "Grayscale Bitcoin Adopters ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "BITQ",
+    "name": "Bitwise Crypto Industry Innovators ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "BLCK",
+    "name": "Corgi Crypto Infrastructure ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "CRPT",
+    "name": "First Trust SkyBridge Crypto Industry and Digital Economy ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "LFGY",
+    "name": "YieldMax Crypto Industry & Tech Portfolio Option Income ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "OWNB",
+    "name": "Bitwise Bitcoin Standard Corporations ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "STCE",
+    "name": "Schwab Crypto Thematic Natural Language Processing ETF",
+    "reason": "Corporate equity/industry proxy outside directly crypto-linked asset scope"
+  },
+  {
+    "ticker": "ANGU",
+    "name": "SEI Ang Research Enhanced U.S. Large Cap ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "CEPI",
+    "name": "REX Crypto Equity Premium Income ETF",
+    "reason": "Explicit crypto corporate equity proxy, no directly named crypto underlying"
+  },
+  {
+    "ticker": "LEND",
+    "name": "SEI High Yield Bond & Alternative Credit ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "QALT",
+    "name": "SEI DBi Multi-Strategy Alternative ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEEM",
+    "name": "SEI Select Emerging Markets Equity ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEIE",
+    "name": "SEI Select International Equity ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEIS",
+    "name": "SEI Select Small Cap ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEUS",
+    "name": "SEI QiM U.S. Equity Factor Allocation Active ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEIM",
+    "name": "SEI Enhanced U.S. Large Cap Momentum Factor ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEIQ",
+    "name": "SEI Enhanced U.S. Large Cap Quality Factor ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SEIV",
+    "name": "SEI Enhanced U.S. Large Cap Value Factor ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  },
+  {
+    "ticker": "SELV",
+    "name": "SEI Enhanced Low Volatility U.S. Large Cap ETF",
+    "reason": "SEI in this fund title is the investment manager brand, not crypto underlying"
+  }
+]

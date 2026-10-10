@@ -1,12 +1,24 @@
 import raw from "../../data/desk-snapshot.json";
 import { acquireDesk, fetchQuotes, socialFromFile } from "./collect.server.ts";
 import type { DeskSnapshot } from "./types.ts";
+import { catalogAssets, catalogWithFlows, refreshCatalog } from "./etf.server.ts";
 
 let cache = raw as unknown as DeskSnapshot;
+cache = { ...cache, etf: { ...cache.etf, catalog: catalogWithFlows(cache.etf, cache.assets) } };
+cache.assets = catalogAssets(cache.etf.catalog!.records, cache.assets);
+
+export async function loadEtfCatalog(): Promise<DeskSnapshot> {
+  const catalog = await refreshCatalog(cache.etf.catalog!);
+  cache = { ...cache, etf: { ...cache.etf, catalog }, assets: catalogAssets(catalog.records, cache.assets) };
+  return cache;
+}
 
 export async function loadDesk(refresh: "no" | "market" | "research"): Promise<DeskSnapshot> {
   if (refresh === "research") {
-    const next = await acquireDesk(undefined, cache.dat.holdings, cache.social);
+    const next = await acquireDesk(undefined, cache.dat.holdings, cache.social, cache.etf);
+    next.etf.catalog = catalogWithFlows({ ...next.etf, catalog: cache.etf.catalog }, next.assets);
+    next.etf.catalog = await refreshCatalog(next.etf.catalog);
+    next.assets = catalogAssets(next.etf.catalog.records, next.assets);
     next.mode = "mixed";
     cache = next;
     return cache;

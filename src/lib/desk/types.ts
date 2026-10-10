@@ -71,6 +71,80 @@ export type EtfProduct = {
   sourceUrl: string;
 };
 
+/** Product lifecycle records are independent of the availability of flow measurements. */
+export type CryptoEtfStatus =
+  | "filed"
+  | "acknowledged"
+  | "under_review"
+  | "amended"
+  | "delayed"
+  | "approved"
+  | "approved_not_launched"
+  | "launched"
+  | "trading"
+  | "withdrawn"
+  | "delisting_filed"
+  | "rejected"
+  | "unverified";
+
+export type CryptoEtfType =
+  "spot" | "futures" | "leveraged" | "inverse" | "basket" | "other" | "unresolved";
+
+export type EtfUnderlying = {
+  assetId: string;
+  symbol: string;
+  name: string | null;
+  weightPct: number | null;
+};
+
+export type EtfEvidence = {
+  url: string;
+  authority: "regulator" | "exchange" | "issuer" | "secondary";
+  title: string;
+  excerpt: string;
+  asOf: string | null;
+  verifiedAt: string | null;
+  status: CryptoEtfStatus | null;
+};
+
+export type CryptoEtfRecord = {
+  id: string;
+  aliases: string[];
+  underlyingAssets: EtfUnderlying[];
+  productName: string | null;
+  issuer: string | null;
+  ticker: string | null;
+  jurisdiction: string;
+  productType: CryptoEtfType;
+  /** Explicit multi-asset mandate when the constituent list is not yet known. */
+  multiAsset?: boolean;
+  status: CryptoEtfStatus;
+  statusAsOf: string | null;
+  filingDate: string | null;
+  approvalDate: string | null;
+  launchDate: string | null;
+  deadline: string | null;
+  exchange: string | null;
+  regulator: string | null;
+  filingUrl: string | null;
+  sourceUrl: string;
+  lastVerifiedAt: string | null;
+  identifiers: { cik: string | null; seriesId: string | null; registrationFile: string | null };
+  evidence: EtfEvidence[];
+  note: string;
+};
+
+export type EtfCatalog = {
+  schemaVersion: 1;
+  scope: string;
+  updatedAt: string | null;
+  complete: boolean;
+  coverageNote: string;
+  records: CryptoEtfRecord[];
+  lastAttemptAt: string | null;
+  refreshError: string | null;
+};
+
 export type EtfSession = {
   assetId: string;
   date: string;
@@ -231,6 +305,8 @@ export type DeskSnapshot = {
   quotes: Quote[];
   candles: Record<string, Candle[]>;
   etf: {
+    /** Optional for older saved snapshots; populated by the server on load. */
+    catalog?: EtfCatalog;
     provenance: Provenance;
     products: EtfProduct[];
     sessions: EtfSession[];

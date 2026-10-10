@@ -133,7 +133,7 @@ function Home() {
               return (
                 <li key={id} className="border-b border-line pb-2">
                   <div className="flex items-center justify-between gap-2">
-                    <Link to="/etf" search={{ ...search, q: id }} className="font-mono">{id.toUpperCase()}</Link>
+                    <Link to="/etf" search={{ ...search, q: id, tab: "flows" }} className="font-mono">{id.toUpperCase()}</Link>
                     <Money n={last?.netFlowUsd ?? null} />
                   </div>
                   <p className="text-xs leading-5 text-muted">{rule.why}</p>

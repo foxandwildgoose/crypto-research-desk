@@ -86,7 +86,7 @@ export function parseEtfHtml(html: string, assetId: string, sourceUrl: string): 
         ticker,
         issuer: row[1] || "",
         jurisdiction: "US",
-        exposure: "spot",
+        exposure: "unresolved",
         sessionDate: null,
         dailyFlowUsd: flow,
         aumUsd: parseUsdCell(row[3] || ""),
